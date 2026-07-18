@@ -44,7 +44,6 @@ declare global {
   }
 }
 
-
 function App() {
   const [userData, setUserData] = useState<UserData | null>(() => {
     const savedUser = localStorage.getItem('tg_user');
@@ -54,16 +53,8 @@ function App() {
     return null;
   });
 
-  const [sessionId] = useState<string | null>(() => {
-    const tg = window.Telegram?.WebApp;
-    if (tg?.CloudStorage) {
-      tg.CloudStorage.getItem('shared_session', (getErr, value) => {
-        if (!getErr && value) {
-          localStorage.setItem('app_session', value);
-        }
-      });
-    }
-    return localStorage.getItem('app_session') || 'Загрузка из Cloud...';
+  const [sessionId, setSessionId] = useState<string | null>(() => {
+    return localStorage.getItem('app_session') || null;
   });
 
   const [isTelegram] = useState(() => {
@@ -89,6 +80,16 @@ function App() {
       localStorage.setItem('tg_user', JSON.stringify(userInfo));
       setUserData(userInfo);
     }
+
+    // Загружаем сессию из Cloud Storage (асинхронно)
+    if (tg.CloudStorage) {
+      tg.CloudStorage.getItem('shared_session', (getErr, value) => {
+        if (!getErr && value) {
+          localStorage.setItem('app_session', value);
+          setSessionId(value);
+        }
+      });
+    }
     return true;
   });
 
@@ -112,10 +113,10 @@ function App() {
 
         <section className="card">
           <h2>💾 Сессия из Cloud</h2>
-          <p><strong>ID:</strong> {sessionId || 'Не найдена'}</p>
+          <p><strong>ID:</strong> {sessionId || 'Загрузка из Cloud...'}</p>
           <p className="hint">Автоматически загружена из Telegram Cloud Storage</p>
         </section>
-        
+
         <section className="card">
           <h2>📦 Товары</h2>
         </section>
