@@ -35,13 +35,14 @@ declare global {
         ready: () => void;
         expand: () => void;
         close: () => void;
-        CloudStorage: {
-          getItem: (key: string, callback: (err: Error | null, value?: string) => void) => void;
-          setItem: (key: string, value: string, callback?: (err: Error | null, success?: boolean) => void) => void;
-        };
       };
     };
   }
+}
+
+function getSessionFromURL(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('session');
 }
 
 function App() {
@@ -53,8 +54,8 @@ function App() {
     return null;
   });
 
-  const [sessionId, setSessionId] = useState<string | null>(() => {
-    return localStorage.getItem('app_session') || null;
+  const [sessionId] = useState<string | null>(() => {
+    return getSessionFromURL();
   });
 
   const [isTelegram] = useState(() => {
@@ -80,16 +81,6 @@ function App() {
       localStorage.setItem('tg_user', JSON.stringify(userInfo));
       setUserData(userInfo);
     }
-
-    // Загружаем сессию из Cloud Storage (асинхронно)
-    if (tg.CloudStorage) {
-      tg.CloudStorage.getItem('shared_session', (getErr, value) => {
-        if (!getErr && value) {
-          localStorage.setItem('app_session', value);
-          setSessionId(value);
-        }
-      });
-    }
     return true;
   });
 
@@ -112,9 +103,9 @@ function App() {
         </section>
 
         <section className="card">
-          <h2>💾 Сессия из Cloud</h2>
-          <p><strong>ID:</strong> {sessionId || 'Загрузка из Cloud...'}</p>
-          <p className="hint">Автоматически загружена из Telegram Cloud Storage</p>
+          <h2>💾 Сессия из URL</h2>
+          <p><strong>ID:</strong> {sessionId || 'Не передан'}</p>
+          <p className="hint">ID сессии передан через URL из бота</p>
         </section>
 
         <section className="card">
